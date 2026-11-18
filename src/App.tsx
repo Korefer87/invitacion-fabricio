@@ -25,7 +25,7 @@ const enlaceCalendario = () => {
     text: `XV Años de ${EVENTO.nombreCorto}`,
     dates: '20270522T180000/20270523T020000',
     ctz: 'America/Mexico_City',
-    details: `Misa ${EVENTO.misa.hora} hrs en ${EVENTO.misa.direccion} · Recepción ${EVENTO.fiesta.hora} hrs en ${EVENTO.fiesta.lugar}`,
+    details: `Misa ${EVENTO.misa.hora} hrs en ${EVENTO.misa.lugar}, ${EVENTO.misa.direccion} · Recepción ${EVENTO.fiesta.hora} hrs en ${EVENTO.fiesta.lugar}`,
     location: `${EVENTO.fiesta.lugar}, ${EVENTO.fiesta.direccion}`,
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;

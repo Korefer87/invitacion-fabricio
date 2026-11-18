@@ -11,7 +11,7 @@ export const EVENTO = {
 
   misa: {
     hora: '18:00',
-    lugar: 'Templo',
+    lugar: 'Templo Sr. de la Misericordia',
     direccion: 'Calle Hidalgo 177, Col. Centro, Tepatitlán de Morelos, Jal.',
     busqueda: 'Calle Hidalgo 177, Centro, 47600 Tepatitlán de Morelos, Jalisco, México',
     mapa: 'https://www.google.com/maps/search/?api=1&query=Calle+Hidalgo+177%2C+Centro%2C+47600+Tepatitl%C3%A1n+de+Morelos%2C+Jalisco%2C+M%C3%A9xico',
