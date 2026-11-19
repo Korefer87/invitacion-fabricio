@@ -429,7 +429,7 @@ function Sobre({ revelar, abrir, alTocar }: { revelar: () => void; abrir: () => 
   const [abriendo, setAbriendo] = React.useState(false);
   const click = () => {
     if (abriendo) return;
-    alTocar();
+    try { alTocar(); } catch { /* la música no debe bloquear el sobre */ }
     const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducido) {
       revelar();
@@ -983,22 +983,30 @@ function useMusica(videoId: string) {
   const tocar = React.useCallback(() => {
     if (!listo.current || !quiere.current) return;
     const p = player.current;
-    if (p.getPlayerState?.() === 1) return;
-    p.unMute();
-    p.setVolume(70);
-    p.playVideo();
+    // La música nunca debe impedir que se abra la invitación
+    try {
+      if (typeof p?.playVideo !== 'function' || p.getPlayerState?.() === 1) return;
+      p.unMute?.();
+      p.setVolume?.(70);
+      p.playVideo();
+    } catch {
+      /* sin música */
+    }
   }, []);
 
   React.useEffect(() => {
     if (!videoId) return;
+    let creado = false;
     const crear = () => {
-      player.current = new window.YT.Player('xv-musica', {
+      if (creado || player.current) return;
+      creado = true;
+      new window.YT.Player('xv-musica', {
         videoId,
         width: 1,
         height: 1,
         playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: videoId, playsinline: 1, disablekb: 1 },
         events: {
-          onReady: () => { listo.current = true; },
+          onReady: (e: { target: any }) => { player.current = e.target; listo.current = true; },
           onStateChange: (e: { data: number }) => {
             if (e.data === 1) setActiva(true);
             if (e.data === 2) setActiva(false);
@@ -1023,7 +1031,7 @@ function useMusica(videoId: string) {
   const reproducir = React.useCallback(() => { quiere.current = true; tocar(); setActiva(true); }, [tocar]);
   const pausar = React.useCallback(() => {
     quiere.current = false;
-    player.current?.pauseVideo?.();
+    try { player.current?.pauseVideo?.(); } catch { /* nada */ }
     setActiva(false);
   }, []);
 
