@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarPlus, X, Check, Crown, CalendarHeart, MapPin, Shirt, Heart } from 'lucide-react';
+import { CalendarPlus, X, Check, Crown, CalendarHeart, MapPin, Shirt, Heart, Volume2, VolumeX } from 'lucide-react';
 import { EVENTO } from './config';
 
 const FECHA = new Date(EVENTO.fechaISO);
@@ -425,10 +425,11 @@ function Princesa(props: React.SVGProps<SVGSVGElement>) {
 // Chispas que salen disparadas al romper el sello: [ángulo°, distancia px, tamaño px]
 const ESTALLIDO = Array.from({ length: 18 }, (_, i) => [i * 20 + (i % 2) * 8, 70 + (i % 4) * 26, 8 + (i % 3) * 5]);
 
-function Sobre({ revelar, abrir }: { revelar: () => void; abrir: () => void }) {
+function Sobre({ revelar, abrir, alTocar }: { revelar: () => void; abrir: () => void; alTocar: () => void }) {
   const [abriendo, setAbriendo] = React.useState(false);
   const click = () => {
     if (abriendo) return;
+    alTocar();
     const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducido) {
       revelar();
@@ -966,7 +967,89 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
 
 /* ---------- Header rosa y navegación tipo app ---------- */
 
-function Encabezado() {
+/* Música de fondo con el reproductor de YouTube (oculto).
+   Los navegadores no dejan sonar audio sin un toque del usuario, así que
+   arranca al tocar el sello del sobre (o el primer toque en la página). */
+declare global {
+  interface Window { YT?: any; onYouTubeIframeAPIReady?: () => void }
+}
+
+function useMusica(videoId: string) {
+  const player = React.useRef<any>(null);
+  const listo = React.useRef(false);
+  const quiere = React.useRef(true);
+  const [activa, setActiva] = React.useState(false);
+
+  const tocar = React.useCallback(() => {
+    if (!listo.current || !quiere.current) return;
+    const p = player.current;
+    if (p.getPlayerState?.() === 1) return;
+    p.unMute();
+    p.setVolume(70);
+    p.playVideo();
+  }, []);
+
+  React.useEffect(() => {
+    if (!videoId) return;
+    const crear = () => {
+      player.current = new window.YT.Player('xv-musica', {
+        videoId,
+        width: 1,
+        height: 1,
+        playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: videoId, playsinline: 1, disablekb: 1 },
+        events: {
+          onReady: () => { listo.current = true; },
+          onStateChange: (e: { data: number }) => {
+            if (e.data === 1) setActiva(true);
+            if (e.data === 2) setActiva(false);
+          },
+        },
+      });
+    };
+    if (window.YT?.Player) crear();
+    else {
+      const previo = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { previo?.(); crear(); };
+      const s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(s);
+    }
+    // Respaldo: si el primer intento no sonó, cualquier toque la inicia
+    const alTocar = () => tocar();
+    document.addEventListener('pointerdown', alTocar);
+    return () => document.removeEventListener('pointerdown', alTocar);
+  }, [videoId, tocar]);
+
+  const reproducir = React.useCallback(() => { quiere.current = true; tocar(); setActiva(true); }, [tocar]);
+  const pausar = React.useCallback(() => {
+    quiere.current = false;
+    player.current?.pauseVideo?.();
+    setActiva(false);
+  }, []);
+
+  return { disponible: !!videoId, activa, reproducir, pausar };
+}
+
+type Musica = ReturnType<typeof useMusica>;
+
+function BotonMusica({ musica }: { musica: Musica }) {
+  if (!musica.disponible) return null;
+  const Icono = musica.activa ? Volume2 : VolumeX;
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={musica.activa ? musica.pausar : musica.reproducir}
+      aria-label={musica.activa ? 'Pausar música' : 'Reproducir música'}
+      aria-pressed={musica.activa}
+      className={`grid h-11 w-11 place-items-center rounded-full border border-rosa-borde bg-white/70 text-rosa-tinta hover:bg-white ${musica.activa ? 'xv-latido' : ''}`}
+    >
+      <Icono className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
+    </button>
+  );
+}
+
+function Encabezado({ musica }: { musica: Musica }) {
   return (
     <header className="xv-header sticky top-[env(safe-area-inset-top)] z-30 border-b border-rosa-borde bg-rosa/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-md items-center justify-between px-[max(16px,env(safe-area-inset-left))]">
@@ -975,9 +1058,12 @@ function Encabezado() {
           <span className="font-script text-2xl leading-none text-tinta">{EVENTO.nombreCorto}</span>
           <span className="font-cinzel text-xs tracking-[0.2em] text-rosa-tinta">XV</span>
         </a>
-        <span className="rounded-full border border-rosa-borde bg-white/70 px-3 py-1 font-cinzel text-[11px] tracking-[0.14em] text-tinta">
-          22 · 05 · 2027
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-rosa-borde bg-white/70 px-3 py-1 font-cinzel text-[11px] tracking-[0.14em] text-tinta">
+            22 · 05 · 2027
+          </span>
+          <BotonMusica musica={musica} />
+        </div>
       </div>
     </header>
   );
@@ -1053,6 +1139,7 @@ export default function App() {
   const [sobreAbierto, setSobreAbierto] = React.useState(saltarSobre);
   const [revelado, setRevelado] = React.useState(saltarSobre);
   const [lluvia, setLluvia] = React.useState(false);
+  const musica = useMusica(EVENTO.musicaYoutube);
 
   React.useEffect(() => {
     document.documentElement.style.overflow = sobreAbierto ? '' : 'hidden';
@@ -1068,10 +1155,13 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-fondo bg-damasco font-sans text-tinta ${revelado ? 'xv-revelado' : 'xv-oculto'}`}>
-      {!sobreAbierto && <Sobre revelar={revelar} abrir={() => setSobreAbierto(true)} />}
+      {!sobreAbierto && <Sobre revelar={revelar} abrir={() => setSobreAbierto(true)} alTocar={musica.reproducir} />}
       {lluvia && <Lluvia />}
       <div aria-hidden="true" className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-rosa" />
-      <Encabezado />
+      <div aria-hidden="true" className="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0">
+        <div id="xv-musica" />
+      </div>
+      <Encabezado musica={musica} />
       <main className="xv-escena mx-auto flex max-w-md flex-col gap-10 px-6 pb-[calc(110px+env(safe-area-inset-bottom))]">
         <Portada />
         <Fecha />

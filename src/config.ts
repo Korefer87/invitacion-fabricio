@@ -35,6 +35,10 @@ export const EVENTO = {
   // Ejemplo: '5213312345678'. Si se deja vacío, WhatsApp pedirá elegir el contacto.
   whatsapp: '523330132720',
 
+  // Canción de fondo: el código del video de YouTube (lo que va después de "watch?v=").
+  // Déjalo vacío para quitar la música.
+  musicaYoutube: 'xxJeIxsOl-Q',
+
   // Imagen que aparece al compartir el enlace (WhatsApp, redes)
   imagenCompartir: '/og.jpg',
 };
