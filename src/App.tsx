@@ -466,6 +466,20 @@ export default function App() {
     document.documentElement.style.overflow = dentro ? '' : 'hidden';
   }, [dentro]);
 
+  // La barra de "Confirmar" aparece hasta que la persona llega al boleto (final de la invitación)
+  // y desde ahí se queda fija, aunque vuelva a subir.
+  const [alFinal, setAlFinal] = React.useState(false);
+  React.useEffect(() => {
+    if (!dentro || alFinal) return;
+    const boleto = document.getElementById('confirmar');
+    if (!boleto) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) setAlFinal(true);
+    }, { threshold: 0.3 });
+    obs.observe(boleto);
+    return () => obs.disconnect();
+  }, [dentro, alFinal]);
+
   return (
     <div className={`min-h-screen bg-tinta font-sans text-tinta ${dentro ? 'po-visible' : 'po-oculto'}`}>
       {!dentro && <Entrada entrar={() => setDentro(true)} alTocar={musica.reproducir} />}
@@ -484,7 +498,7 @@ export default function App() {
         <p className="px-5 text-center font-poster text-2xl tracking-[0.08em]">¡NOS VEMOS EN PRIMERA FILA!</p>
       </main>
 
-      {dentro && <BarraConfirmar confirmar={() => setRsvp(true)} />}
+      {dentro && alFinal && <BarraConfirmar confirmar={() => setRsvp(true)} />}
       <Confirmar abierto={rsvp} cerrar={() => setRsvp(false)} />
     </div>
   );
