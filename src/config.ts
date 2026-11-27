@@ -1,35 +1,40 @@
 // Datos de la invitación. Edita este archivo para cambiar la información.
 
 export const EVENTO = {
-  nombreCorto: 'Gloria',
-  nombreCompleto: 'Gloria Regina Ramos Fernández',
-  padres: ['Daisy Fernández Reyes', 'Fabricio Ramos Ponce'],
+  nombre: 'Fabricio',
+  edad: 60,
+  nacimiento: '7 de enero de 1967',
+  cumple: '7 de enero de 2027',
 
   // Fecha y hora de inicio (hora del centro de México)
-  fechaISO: '2027-05-22T18:00:00-06:00',
-  fechaTexto: 'Sábado 22 de mayo de 2027',
+  fechaISO: '2027-01-09T15:00:00-06:00',
+  fechaTexto: 'Sábado 9 de enero de 2027',
+  fechaCorta: '09.01.27',
+  hora: '3:00 pm',
+  // Para "Agregar al calendario" (inicio/fin en hora local)
+  calendario: '20270109T150000/20270109T230000',
 
-  misa: {
-    hora: '18:00',
-    lugar: 'Templo Sr. de la Misericordia',
-    direccion: 'Calle Hidalgo 177, Col. Centro, Tepatitlán de Morelos, Jal.',
-    busqueda: 'Calle Hidalgo 177, Centro, 47600 Tepatitlán de Morelos, Jalisco, México',
-    mapa: 'https://www.google.com/maps/search/?api=1&query=Calle+Hidalgo+177%2C+Centro%2C+47600+Tepatitl%C3%A1n+de+Morelos%2C+Jalisco%2C+M%C3%A9xico',
+  lugar: {
+    nombre: 'Mansión Mansur',
+    // Escribe aquí la dirección cuando la tengas; si está vacía no se muestra.
+    direccion: '',
+    // Ubicación exacta en Google Maps (latitud, longitud)
+    coordenadas: '20.6627313290997,-103.43010018027319',
+    foto: 'fotos/lugar.jpg',
   },
 
-  fiesta: {
-    hora: '20:00',
-    lugar: 'Casa Amada',
-    direccion: 'Carretera Tepatitlán – Yahualica Km 1.9',
-    busqueda: 'Casa Amada, Carretera Tepatitlán - Yahualica Km 1.9, Jalisco',
-    mapa: 'https://www.google.com/maps/search/?api=1&query=Casa+Amada+Carretera+Tepatitl%C3%A1n+Yahualica+Km+1.9',
-  },
+  vestimenta: 'Casual. Ven cómodo y con ganas de bailar.',
 
-  vestimenta: [
-    { nombre: 'Gris', color: '#9AA3AD', texto: '#0A1626' },
-    { nombre: 'Azul marino', color: '#1F2F4F', texto: '#FFFFFF' },
-    { nombre: 'Rosa bajito', color: '#F2CFD6', texto: '#0A1626' },
+  // Las fotos por época (están en public/fotos)
+  gira: [
+    { epoca: '1967', titulo: 'El debut', foto: 'fotos/bebe.jpg' },
+    { epoca: '70s', titulo: 'Gira del moño rojo', foto: 'fotos/nino.jpg' },
+    { epoca: '80s', titulo: 'Tour de los rizos', foto: 'fotos/joven.jpg' },
+    { epoca: '90s', titulo: 'Traje y corbata', foto: 'fotos/traje.jpg' },
+    { epoca: '2010s', titulo: 'Lentes y barba', foto: 'fotos/lentes.jpg' },
+    { epoca: 'Hoy', titulo: '60 y contando', foto: 'fotos/hoy.jpg' },
   ],
+  fotoPortada: 'fotos/lentes.jpg',
 
   // Número de WhatsApp que recibe las confirmaciones, con lada de país y sin espacios.
   // Ejemplo: '5213312345678'. Si se deja vacío, WhatsApp pedirá elegir el contacto.
@@ -37,8 +42,11 @@ export const EVENTO = {
 
   // Canción de fondo: el código del video de YouTube (lo que va después de "watch?v=").
   // Déjalo vacío para quitar la música.
-  musicaYoutube: 'xxJeIxsOl-Q',
-
-  // Imagen que aparece al compartir el enlace (WhatsApp, redes)
-  imagenCompartir: '/og.jpg',
+  musicaYoutube: '',
 };
+
+export const mapaUrl = () =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(EVENTO.lugar.coordenadas)}`;
+
+export const mapaEmbed = () =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(EVENTO.lugar.coordenadas)}&z=16&output=embed`;

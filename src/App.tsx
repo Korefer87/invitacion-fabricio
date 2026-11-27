@@ -1,8 +1,10 @@
 import React from 'react';
-import { CalendarPlus, X, Check, Crown, CalendarHeart, MapPin, Shirt, Heart, Volume2, VolumeX } from 'lucide-react';
-import { EVENTO } from './config';
+import { CalendarPlus, X, Check, MapPin, Volume2, VolumeX, Ticket } from 'lucide-react';
+import { EVENTO, mapaUrl, mapaEmbed } from './config';
 
 const FECHA = new Date(EVENTO.fechaISO);
+const BASE = import.meta.env.BASE_URL;
+const foto = (ruta: string) => `${BASE}${ruta}`;
 
 function useCuentaRegresiva() {
   const [ahora, setAhora] = React.useState(() => Date.now());
@@ -22,690 +24,108 @@ function useCuentaRegresiva() {
 const enlaceCalendario = () => {
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `XV Años de ${EVENTO.nombreCorto}`,
-    dates: '20270522T180000/20270523T020000',
+    text: `${EVENTO.nombre} cumple ${EVENTO.edad}`,
+    dates: EVENTO.calendario,
     ctz: 'America/Mexico_City',
-    details: `Misa ${EVENTO.misa.hora} hrs en ${EVENTO.misa.lugar}, ${EVENTO.misa.direccion} · Recepción ${EVENTO.fiesta.hora} hrs en ${EVENTO.fiesta.lugar}`,
-    location: `${EVENTO.fiesta.lugar}, ${EVENTO.fiesta.direccion}`,
+    details: `Fiesta de los ${EVENTO.edad} años de ${EVENTO.nombre}. ${EVENTO.vestimenta}`,
+    location: [EVENTO.lugar.nombre, EVENTO.lugar.direccion].filter(Boolean).join(', '),
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
-/* ---------- Íconos de línea ---------- */
+/* ---------- Entrada: boleto que se corta ---------- */
 
-const Corona = ({ className = '', color = 'currentColor' }: { className?: string; color?: string }) => (
-  <svg className={className} viewBox="0 0 54 36" fill="none" stroke={color} strokeWidth="1.6" aria-hidden="true">
-    <path d="M5 32 L3 10 L16 20 L27 3 L38 20 L51 10 L49 32 Z" />
-    <path d="M5 32 H49" />
-    <circle cx="27" cy="3" r="2" />
-    <circle cx="3" cy="10" r="1.8" />
-    <circle cx="51" cy="10" r="1.8" />
-    <circle cx="27" cy="25" r="2.4" />
-  </svg>
-);
+function Entrada({ entrar, alTocar }: { entrar: () => void; alTocar: () => void }) {
+  const [saliendo, setSaliendo] = React.useState(false);
 
-const IconoTemplo = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-    <path d="M12 2v4M10 4h4" />
-    <path d="M6 22V11l6-5 6 5v11" />
-    <path d="M10 22v-5a2 2 0 0 1 4 0v5" />
-    <path d="M3 22h18" />
-  </svg>
-);
-
-const IconoCopa = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-    <path d="M7 3h10l-1 7a4 4 0 0 1-8 0z" />
-    <path d="M12 14v6M8 21h8" />
-  </svg>
-);
-
-const IconoSobre = () => (
-  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-    <rect x="3" y="6" width="18" height="13" rx="1" />
-    <path d="M3 7l9 6 9-6" />
-  </svg>
-);
-
-const Perlas = () => (
-  <div className="flex justify-center gap-2" aria-hidden="true">
-    <span className="h-1.5 w-1.5 rounded-full bg-perla" />
-    <span className="h-1.5 w-1.5 rounded-full bg-arco" />
-    <span className="h-1.5 w-1.5 rounded-full bg-perla" />
-  </div>
-);
-
-const Tiara = ({ className = '', color = 'currentColor' }: { className?: string; color?: string }) => (
-  <svg className={className} viewBox="0 0 80 46" fill="none" stroke={color} strokeWidth="1.3" strokeLinecap="round" aria-hidden="true">
-    <path d="M6 42 Q40 33 74 42" />
-    <path d="M6 42 C8 30 14 24 19 28 C21 20 27 15 31 19 C33 10 37 5 40 3 C43 5 47 10 49 19 C53 15 59 20 61 28 C66 24 72 30 74 42" />
-    <path d="M40 13 C36 21 36 28 40 34 C44 28 44 21 40 13 Z" />
-    <path d="M31 24 C29 28 30 32 33 35 M49 24 C51 28 50 32 47 35" />
-    <path d="M19 32 C18 35 19 37 21 39 M61 32 C62 35 61 37 59 39" />
-    <circle cx="40" cy="7.5" r="2.6" fill={color} stroke="none" />
-    <circle cx="31" cy="20" r="1.6" fill={color} stroke="none" />
-    <circle cx="49" cy="20" r="1.6" fill={color} stroke="none" />
-    <circle cx="19" cy="29" r="1.3" fill={color} stroke="none" />
-    <circle cx="61" cy="29" r="1.3" fill={color} stroke="none" />
-    <circle cx="40" cy="24" r="1.8" />
-  </svg>
-);
-
-/* Separador de filigrana simétrico */
-
-/* ---------- Flores: rosas, hojas, flores pequeñas y botones ---------- */
-
-const TONOS_ROSA = {
-  azul: { base: '#9CCBF0', medio: '#7DB4E4', oscuro: '#5E97CC' },
-  rosa: { base: '#F7C6D3', medio: '#EFA3B8', oscuro: '#D9809A' },
-  blanco: { base: '#FFFFFF', medio: '#EEF4FA', oscuro: '#BFD3E6' },
-} as const;
-type Tono = keyof typeof TONOS_ROSA;
-
-type Pieza =
-  | ['rosa', number, number, number, Tono]
-  | ['hoja', number, number, number, number]
-  | ['flor', number, number, number, string]
-  | ['boton', number, number, number, Tono]
-  | ['tallo', string];
-
-function Rosa({ x, y, s, tono }: { x: number; y: number; s: number; tono: Tono; key?: React.Key }) {
-  const t = TONOS_ROSA[tono];
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <circle r="10" fill={t.base} stroke={t.oscuro} strokeOpacity="0.35" strokeWidth="0.6" />
-      <path d="M-9 2 C-10 -6 -3 -10 3 -9 C9 -8 11 -1 8 4" stroke={t.oscuro} strokeWidth="0.9" fill="none" opacity="0.6" />
-      <path d="M-6 4 C-8 -3 -2 -7 3 -6 C7 -5 8 0 5 3 C2 6 -3 7 -6 4 Z" fill={t.medio} />
-      <path d="M-3 2 C-4 -2 0 -4 3 -3 C5 -2 5 1 3 2 C1 3 -1 2 -1 0" stroke={t.oscuro} strokeWidth="1" fill="none" strokeLinecap="round" />
-      <path d="M-8 5 C-4 10 4 10 8 5" stroke={t.oscuro} strokeWidth="0.7" fill="none" opacity="0.5" />
-      <circle cx="-3.5" cy="-5" r="2.6" fill="#FFFFFF" opacity="0.4" />
-    </g>
-  );
-}
-
-function Ramo({ piezas, transform }: { piezas: Pieza[]; transform?: string }) {
-  return (
-    <g transform={transform} aria-hidden="true">
-      {piezas.map((p, i) => {
-        switch (p[0]) {
-          case 'tallo':
-            return <path key={i} d={p[1]} stroke="#8DB596" strokeWidth="1.2" fill="none" strokeLinecap="round" />;
-          case 'hoja': {
-            const [, x, y, s, rot] = p;
-            return (
-              <g key={i} transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}>
-                <path d="M0 0 C5 -6 14 -5 18 0 C14 5 5 6 0 0 Z" fill="#8DB596" />
-                <path d="M1 0 C6 -1 12 -1 16 0" stroke="#6E9A79" strokeWidth="0.6" fill="none" />
-              </g>
-            );
-          }
-          case 'rosa':
-            return <Rosa key={i} x={p[1]} y={p[2]} s={p[3]} tono={p[4]} />;
-          case 'flor': {
-            const [, x, y, r, color] = p;
-            return (
-              <g key={i}>
-                {[0, 72, 144, 216, 288].map((a) => (
-                  <circle key={a} cx={x + Math.cos((a * Math.PI) / 180) * r} cy={y + Math.sin((a * Math.PI) / 180) * r} r={r * 0.8} fill={color} stroke="#BFD3E6" strokeWidth="0.3" />
-                ))}
-                <circle cx={x} cy={y} r={r * 0.55} fill="#F5D98B" />
-              </g>
-            );
-          }
-          case 'boton': {
-            const [, x, y, s, tono] = p;
-            return (
-              <g key={i} transform={`translate(${x} ${y}) scale(${s})`}>
-                <path d="M0 4 C-3 1 -3 -4 0 -6 C3 -4 3 1 0 4 Z" fill={TONOS_ROSA[tono].medio} />
-                <path d="M0 4 C-2 3 -4 4 -4 6 M0 4 C2 3 4 4 4 6" stroke="#8DB596" strokeWidth="1" fill="none" />
-              </g>
-            );
-          }
-        }
-      })}
-    </g>
-  );
-}
-
-// Guirnalda de la esquina superior izquierda del arco, con enredadera por la pilastra (lienzo 340×480)
-const RAMO_ESQUINA: Pieza[] = [
-  ['tallo', 'M14 178 C6 218 22 248 12 288 C6 318 18 340 12 372'],
-  ['hoja', 12, 200, 0.6, 150], ['hoja', 16, 232, 0.6, 30], ['hoja', 10, 264, 0.6, 160], ['hoja', 16, 302, 0.55, 20], ['hoja', 12, 342, 0.55, 170],
-  ['flor', 14, 216, 1.9, '#FFFFFF'], ['flor', 12, 250, 1.7, '#F7C6D3'], ['flor', 15, 284, 1.7, '#FFFFFF'], ['flor', 11, 324, 1.5, '#B9DAF2'], ['flor', 13, 362, 1.5, '#FFFFFF'],
-  ['hoja', 6, 152, 1.15, 200], ['hoja', 30, 126, 1, -60], ['hoja', 46, 152, 0.95, 20], ['hoja', 12, 178, 1, 110], ['hoja', 54, 126, 0.85, -20], ['hoja', -2, 128, 0.9, -140],
-  ['rosa', 22, 148, 1.35, 'azul'], ['rosa', 45, 133, 1, 'rosa'], ['rosa', 7, 168, 0.95, 'blanco'], ['rosa', 38, 162, 0.75, 'blanco'], ['rosa', 5, 134, 0.72, 'rosa'],
-  ['flor', 58, 142, 2.3, '#FFFFFF'], ['flor', 29, 176, 2, '#F7C6D3'], ['flor', 60, 118, 1.9, '#FFFFFF'],
-  ['boton', 64, 132, 0.9, 'rosa'], ['boton', 18, 122, 0.9, 'azul'],
-];
-
-// Arreglo floral en la base de la puerta
-const RAMO_BASE: Pieza[] = [
-  ['hoja', -2, 456, 1, -160], ['hoja', 50, 458, 0.9, -20], ['hoja', 24, 440, 0.95, -95], ['hoja', 40, 444, 0.8, -50],
-  ['rosa', 20, 458, 1.25, 'rosa'], ['rosa', 42, 467, 1, 'azul'], ['rosa', 5, 470, 0.95, 'blanco'], ['rosa', 32, 445, 0.8, 'blanco'],
-  ['flor', 54, 472, 2.1, '#FFFFFF'], ['flor', 12, 444, 1.9, '#F7C6D3'], ['boton', 48, 440, 0.9, 'azul'],
-];
-
-// Ramo sobre la clave del arco
-const RAMO_CLAVE: Pieza[] = [
-  ['hoja', 140, 14, 0.85, 170], ['hoja', 200, 14, 0.85, 10], ['hoja', 158, -2, 0.7, -120], ['hoja', 182, -2, 0.7, -60],
-  ['rosa', 150, 12, 0.8, 'rosa'], ['rosa', 190, 12, 0.8, 'azul'], ['rosa', 170, -4, 0.85, 'blanco'],
-  ['flor', 140, 2, 1.6, '#FFFFFF'], ['flor', 200, 2, 1.6, '#FFFFFF'],
-];
-
-// Ramito para la punta de las tarjetas (lienzo 200×76)
-const RAMO_TARJETA: Pieza[] = [
-  ['hoja', 84, 8, 0.55, 170], ['hoja', 116, 8, 0.55, 10],
-  ['rosa', 91, 8, 0.42, 'azul'], ['rosa', 109, 8, 0.42, 'blanco'], ['rosa', 100, 4, 0.56, 'rosa'],
-];
-
-// Ramito para el centro de los separadores (lienzo 220×24)
-const RAMO_SEPARADOR: Pieza[] = [
-  ['hoja', 96, 13, 0.5, 175], ['hoja', 124, 13, 0.5, 5],
-  ['rosa', 102, 14, 0.42, 'azul'], ['rosa', 118, 14, 0.42, 'azul'], ['rosa', 110, 11, 0.6, 'rosa'],
-];
-
-// Esquina del sobre (lienzo 80×80)
-const RAMO_SOBRE: Pieza[] = [
-  ['hoja', 6, 30, 1, 100], ['hoja', 28, 6, 1, -10], ['hoja', 30, 26, 0.8, 40],
-  ['rosa', 14, 14, 1.3, 'rosa'], ['rosa', 34, 16, 0.9, 'blanco'], ['rosa', 14, 36, 0.9, 'azul'],
-  ['flor', 44, 6, 2, '#FFFFFF'], ['flor', 6, 46, 1.9, '#FFFFFF'], ['boton', 40, 30, 0.9, 'rosa'],
-];
-
-const Filigrana = ({ className = '' }: { className?: string }) => (
-  <svg className={`mx-auto h-6 w-[220px] max-w-full overflow-visible text-perla ${className}`} viewBox="0 0 220 24" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" aria-hidden="true">
-    <g id="fil-izq">
-      <path d="M100 12 C92 12 88 18 82 16 C77 14 79 8 84 9 C88 10 87 14 84 14" />
-      <path d="M82 16 C68 22 52 4 36 12 C30 15 22 12 14 12" />
-      <path d="M60 11 C56 6 50 6 48 9" />
-      <circle cx="10" cy="12" r="1.6" fill="currentColor" stroke="none" />
-    </g>
-    <use href="#fil-izq" transform="matrix(-1 0 0 1 220 0)" />
-    <g stroke="none">
-      <Ramo piezas={RAMO_SEPARADOR} transform="translate(110 12) scale(1.7) translate(-110 -12)" />
-    </g>
-  </svg>
-);
-
-const Destello = ({ style }: { style: React.CSSProperties; key?: React.Key }) => (
-  <svg className="xv-destello absolute" style={style} viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true">
-    <path d="M12 0c.7 6.3 5.7 11.3 12 12-6.3.7-11.3 5.7-12 12-.7-6.3-5.7-11.3-12-12C6.3 11.3 11.3 6.3 12 0z" />
-  </svg>
-);
-
-// [left %, top %, tamaño px] alrededor del arco
-const DESTELLOS = [
-  [-6, 8, 16], [96, 4, 12], [104, 30, 18], [-10, 40, 11], [100, 62, 13],
-  [-4, 72, 15], [18, -3, 10], [78, -2, 14], [50, -6, 9], [104, 88, 10], [-8, 92, 12],
-];
-
-/* ---------- Ilustración: princesa de espaldas con vestido azul cielo ---------- */
-
-const BRILLOS_VESTIDO = [
-  [100, 200, 1.1], [60, 250, 1.2], [140, 250, 1.2], [40, 300, 1], [160, 300, 1.1], [100, 300, 1.3],
-  [80, 330, 1.1], [120, 330, 1.1], [24, 336, 0.9], [176, 336, 1], [100, 240, 1], [70, 214, 0.9],
-  [130, 214, 0.9], [52, 342, 1], [148, 342, 1], [100, 344, 1.2], [88, 270, 0.9], [112, 270, 0.9],
-];
-
-// Flores aplicadas a lo largo de la sobrefalda: [x, y, radio]
-const FLORES_IZQ = [
-  [16, 302, 3], [30, 307, 3.4], [46, 307, 3], [62, 302, 3.6], [76, 294, 3], [88, 282, 3.4],
-  [94, 266, 2.8], [97, 248, 3], [98.5, 228, 2.6], [99.4, 208, 2.4], [99.8, 188, 2.2], [56, 310, 2], [38, 313, 1.8],
-];
-const FLORES = [...FLORES_IZQ, ...FLORES_IZQ.map(([x, y, r]) => [200 - x, y, r])];
-
-
-function Princesa(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 200 360" role="img" aria-label="Ilustración de una princesa de espaldas con tiara y vestido de gala azul cielo" {...props}>
-      <defs>
-        <linearGradient id="pf-falda" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#CDE6FA" />
-          <stop offset="0.5" stopColor="#A6D0F2" />
-          <stop offset="1" stopColor="#7DB2E2" />
-        </linearGradient>
-        <linearGradient id="pf-drapeado" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#B4D8F5" />
-          <stop offset="1" stopColor="#6FA6DA" />
-        </linearGradient>
-        <linearGradient id="pf-panel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#E3F1FC" />
-          <stop offset="1" stopColor="#B9DAF2" />
-        </linearGradient>
-        <linearGradient id="pf-corset" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#8FC0EA" />
-          <stop offset="0.5" stopColor="#B4D8F5" />
-          <stop offset="1" stopColor="#8FC0EA" />
-        </linearGradient>
-        <linearGradient id="pf-manga" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#8FC0EA" />
-          <stop offset="0.5" stopColor="#C6E2F8" />
-          <stop offset="1" stopColor="#8FC0EA" />
-        </linearGradient>
-        <linearGradient id="pf-cabello" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6B4230" />
-          <stop offset="0.5" stopColor="#8A5840" />
-          <stop offset="1" stopColor="#5E3A29" />
-        </linearGradient>
-        <linearGradient id="pf-piel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#F6D6C0" />
-          <stop offset="1" stopColor="#EBBC9E" />
-        </linearGradient>
-        <filter id="pf-suave" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="0.8" />
-        </filter>
-        <filter id="pf-difuso" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="2.2" />
-        </filter>
-      </defs>
-
-      {/* Sombra en el piso */}
-      <ellipse cx="100" cy="352" rx="84" ry="6" fill="#3E6E95" opacity="0.2" filter="url(#pf-difuso)" />
-
-      {/* Falda de gala de quince años */}
-      <path d="M82 150 C54 196 16 272 0 350 Q100 366 200 350 C184 272 146 196 118 150 Z" fill="url(#pf-falda)" />
-      <g fill="none" strokeWidth="1">
-        <path d="M86 170 C70 230 46 290 24 352" stroke="#5E97CC" strokeOpacity="0.3" />
-        <path d="M114 170 C130 230 154 290 176 352" stroke="#5E97CC" strokeOpacity="0.3" />
-        <path d="M94 180 C88 240 78 300 66 356" stroke="#FFFFFF" strokeOpacity="0.4" />
-        <path d="M106 180 C112 240 122 300 134 356" stroke="#FFFFFF" strokeOpacity="0.4" />
-        <path d="M100 190 V358" stroke="#5E97CC" strokeOpacity="0.25" />
-      </g>
-      {/* Holanes del bajo */}
-      <path d="M2 348 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0" stroke="#FFFFFF" strokeOpacity="0.8" strokeWidth="1.1" fill="none" />
-      {/* Sobrefalda abierta en V con aplicaciones */}
-      <path
-        d="M82 150 C60 198 30 258 12 300 C40 314 70 302 90 282 C96 262 98 222 100 168 C102 222 104 262 110 282 C130 302 160 314 188 300 C170 258 140 198 118 150 Z"
-        fill="url(#pf-panel)"
-        opacity="0.7"
-      />
-      <path
-        d="M12 300 C40 314 70 302 90 282 C96 262 98 222 100 168 C102 222 104 262 110 282 C130 302 160 314 188 300"
-        stroke="#FFFFFF" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeDasharray="0.1 3.2"
-      />
-      {FLORES.map(([x, y, r], i) => (
-        <g key={i} fill="#FFFFFF">
-          {[0, 72, 144, 216, 288].map((a) => (
-            <circle key={a} cx={x + Math.cos((a * Math.PI) / 180) * r} cy={y + Math.sin((a * Math.PI) / 180) * r} r={r * 0.75} opacity="0.92" />
-          ))}
-          <circle cx={x} cy={y} r={r * 0.55} fill="#B9DAF2" />
-        </g>
-      ))}
-      {BRILLOS_VESTIDO.map(([x, y, r], i) => (
-        <circle key={`b${i}`} className="xv-chispa" cx={x} cy={y} r={r} fill="#FFFFFF" style={{ animationDelay: `-${i * 0.3}s` }} />
-      ))}
-
-      {/* Espalda descubierta */}
-      <path d="M66 100 C74 92 90 90 100 90 C110 90 126 92 134 100 L131 124 Q100 117 69 124 Z" fill="url(#pf-piel)" />
-      <path d="M84 102 C80 108 82 114 88 117 M116 102 C120 108 118 114 112 117" stroke="#D59F7E" strokeOpacity="0.5" strokeWidth="0.8" fill="none" />
-      <path d="M100 95 V118" stroke="#D59F7E" strokeOpacity="0.3" strokeWidth="0.8" />
-
-      {/* Brazos descubiertos */}
-      <path d="M66 104 C58 118 54 140 56 164 C57 178 58 190 60 198 C63 201 67 199 66 194 C64 180 64 166 66 150 C68 134 72 120 73 110 Z" fill="url(#pf-piel)" />
-      <path d="M59 196 C57 204 59 210 62 212 C66 210 67 204 66 196 Z" fill="url(#pf-piel)" />
-      <path d="M60 130 C58 144 58 156 59 168" stroke="#D59F7E" strokeOpacity="0.5" strokeWidth="0.8" fill="none" />
-      <path d="M134 104 C144 116 150 134 146 150 C144 156 138 158 124 156 L124 150 L138 147 C140 136 136 122 127 110 Z" fill="url(#pf-piel)" />
-      <path d="M124 149 C118 149 116 155 120 159 C124 159 126 155 126 151 Z" fill="url(#pf-piel)" />
-
-      {/* Corset de espalda baja con agujetas y aplicaciones */}
-      <path d="M69 123 Q100 116 131 123 L120 150 L100 160 L80 150 Z" fill="url(#pf-corset)" />
-      <path d="M69 123 Q100 116 131 123" stroke="#FFFFFF" strokeWidth="1.6" fill="none" strokeDasharray="0.1 2.6" strokeLinecap="round" />
-      <path d="M80 150 L100 160 L120 150" stroke="#FFFFFF" strokeWidth="1.2" fill="none" />
-      <g fill="none" strokeLinecap="round">
-        <path d="M96 121 V157 M104 121 V157" stroke="#6FA6DA" strokeWidth="0.7" />
-        <path d="M96 122 L104 128 L96 134 L104 140 L96 146 L104 152 L96 157" stroke="#FFFFFF" strokeWidth="0.9" />
-        <path d="M104 122 L96 128 L104 134 L96 140 L104 146 L96 152" stroke="#FFFFFF" strokeWidth="0.9" opacity="0.8" />
-      </g>
-      {[[80, 132, 2.2], [86, 142, 1.8], [120, 132, 2.2], [114, 142, 1.8], [76, 126, 1.5], [124, 126, 1.5]].map(([x, y, r], i) => (
-        <g key={i} fill="#FFFFFF">
-          {[0, 72, 144, 216, 288].map((a) => (
-            <circle key={a} cx={x + Math.cos((a * Math.PI) / 180) * r} cy={y + Math.sin((a * Math.PI) / 180) * r} r={r * 0.7} opacity="0.9" />
-          ))}
-          <circle cx={x} cy={y} r={r * 0.5} fill="#B9DAF2" />
-        </g>
-      ))}
-      {/* Moño de las agujetas */}
-      <path d="M100 156 C94 150 88 152 90 157 C92 161 97 159 100 156 Z M100 156 C106 150 112 152 110 157 C108 161 103 159 100 156 Z" fill="#6FA6DA" />
-      <path d="M99 157 L95 172 L98 170 L100 175 Z M101 157 L105 172 L102 170 L100 175 Z" fill="#5E97CC" />
-      <circle cx="100" cy="156.5" r="2" fill="#5E97CC" />
-
-      {/* Mangas caídas con holán */}
-      <path d="M60 106 C53 106 50 116 55 122 C59 128 68 128 73 122 C77 116 74 107 67 106 Z" fill="url(#pf-manga)" />
-      <path d="M58 116 C55 122 58 130 64 130 C70 130 75 126 74 120" fill="url(#pf-manga)" opacity="0.9" />
-      <path d="M140 106 C147 106 150 116 145 122 C141 128 132 128 127 122 C123 116 126 107 133 106 Z" fill="url(#pf-manga)" />
-      <path d="M142 116 C145 122 142 130 136 130 C130 130 125 126 126 120" fill="url(#pf-manga)" opacity="0.9" />
-      <path d="M57 112 C60 118 66 122 72 118 M143 112 C140 118 134 122 128 118" stroke="#FFFFFF" strokeWidth="0.8" fill="none" opacity="0.9" />
-
-      <g transform="matrix(0.82 0 0 0.88 18 2.4)">
-      {/* Cabello largo cayendo por la espalda */}
-      <path
-        d="M82 30 C78 20 122 20 118 30 C124 46 125 66 127 88 C129 108 125 124 127 138 C123 146 118 142 116 148 C112 144 106 150 100 146 C94 150 88 144 84 148 C82 142 77 146 73 138 C75 124 71 108 73 88 C75 66 76 46 82 30 Z"
-        fill="url(#pf-cabello)"
-      />
-      <path d="M84 34 C77 54 80 74 76 94 C74 108 78 122 76 136 C80 132 84 128 86 120 C88 104 86 86 88 66 C89 52 88 42 90 34 Z" fill="#5E3A29" />
-      <path d="M91 34 C87 56 93 76 89 96 C87 112 91 126 92 142 C95 132 96 118 96 104 C97 84 95 60 97 36 Z" fill="#7C4F38" />
-      <path d="M97 36 C96 60 101 80 98 100 C96 116 100 130 100 144 C104 130 104 114 104 100 C104 80 102 58 103 36 Z" fill="#8C5A40" />
-      <path d="M103 36 C106 58 104 80 108 100 C110 116 107 130 108 142 C111 130 112 114 111 98 C110 78 112 56 109 34 Z" fill="#744832" />
-      <path d="M110 34 C112 42 111 52 112 66 C114 86 112 104 114 120 C116 128 120 132 124 136 C122 122 126 108 124 94 C120 74 123 54 116 34 Z" fill="#5E3A29" />
-      <g fill="none" strokeLinecap="round">
-        <path d="M88 40 C84 58 88 74 84 92 C82 104 85 116 83 128" stroke="#2A170F" strokeOpacity="0.35" strokeWidth="0.7" />
-        <path d="M100 40 C99 60 103 78 100 96 C98 110 101 124 100 138" stroke="#2A170F" strokeOpacity="0.3" strokeWidth="0.7" />
-        <path d="M112 40 C116 58 112 74 116 92 C118 104 115 116 117 128" stroke="#2A170F" strokeOpacity="0.35" strokeWidth="0.7" />
-        <path d="M90 36 C86 52 90 66 87 80" stroke="#C99A7C" strokeOpacity="0.8" strokeWidth="1.8" filter="url(#pf-suave)" />
-        <path d="M101 36 C103 54 99 68 102 84" stroke="#D8AA8A" strokeOpacity="0.75" strokeWidth="2" filter="url(#pf-suave)" />
-        <path d="M111 38 C113 52 111 64 114 76" stroke="#C08A68" strokeOpacity="0.6" strokeWidth="1.4" filter="url(#pf-suave)" />
-        <path d="M94 100 C92 110 95 120 93 130 M107 100 C109 110 106 120 108 130" stroke="#B07D5F" strokeOpacity="0.5" strokeWidth="1" />
-        {/* Rizos de las puntas */}
-        <path d="M74 136 C72 142 76 146 80 143" stroke="#5E3A29" strokeWidth="1.3" />
-        <path d="M86 146 C84 152 88 155 92 152" stroke="#7C4F38" strokeWidth="1.3" />
-        <path d="M114 146 C116 152 112 155 108 152" stroke="#744832" strokeWidth="1.3" />
-        <path d="M126 136 C128 142 124 146 120 143" stroke="#5E3A29" strokeWidth="1.3" />
-        {/* Medio recogido */}
-        <path d="M82 38 C88 44 95 46 100 46 M118 38 C112 44 105 46 100 46" stroke="#2A170F" strokeOpacity="0.55" strokeWidth="2.2" />
-        <path d="M83 39 C89 44 95 45 100 45 M117 39 C111 44 105 45 100 45" stroke="#A87558" strokeOpacity="0.7" strokeWidth="0.8" />
-      </g>
-      <path d="M100 46 C94 40 89 44 92 48 C94 51 98 49 100 46 Z M100 46 C106 40 111 44 108 48 C106 51 102 49 100 46 Z" fill="#9CCAF0" />
-      <path d="M99 47 L96 58 L99 56 L100 60 Z M101 47 L104 58 L101 56 L100 60 Z" fill="#86BAE6" />
-      <circle cx="100" cy="46.5" r="1.8" fill="#6FA6DA" />
-      <ellipse cx="100" cy="27" rx="12" ry="4" fill="#E2B595" opacity="0.4" filter="url(#pf-difuso)" />
-
-      </g>
-
-      {/* Tiara plateada con gema azul */}
-      <path d="M86 30 L89 22 L93 27 L97 17 L100 12 L103 17 L107 27 L111 22 L114 30 Q100 25 86 30 Z" fill="#EEF5FC" stroke="#A9C4DC" strokeWidth="0.6" />
-      <circle cx="100" cy="20" r="2.2" fill="#5E97CC" stroke="#FFFFFF" strokeWidth="0.5" />
-      <circle cx="93" cy="26" r="0.9" fill="#8FBCE0" />
-      <circle cx="107" cy="26" r="0.9" fill="#8FBCE0" />
-      <circle className="xv-chispa" cx="100" cy="12" r="1.2" fill="#FFFFFF" />
-    </svg>
-  );
-}
-
-/* ---------- Sobre de entrada ---------- */
-
-// Chispas que salen disparadas al romper el sello: [ángulo°, distancia px, tamaño px]
-const ESTALLIDO = Array.from({ length: 18 }, (_, i) => [i * 20 + (i % 2) * 8, 70 + (i % 4) * 26, 8 + (i % 3) * 5]);
-
-function Sobre({ revelar, abrir, alTocar }: { revelar: () => void; abrir: () => void; alTocar: () => void }) {
-  const [abriendo, setAbriendo] = React.useState(false);
-  const click = () => {
-    if (abriendo) return;
-    try { alTocar(); } catch { /* la música no debe bloquear el sobre */ }
-    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reducido) {
-      revelar();
-      abrir();
-      return;
-    }
-    setAbriendo(true);
-    window.setTimeout(revelar, 2150);
-    window.setTimeout(abrir, 2900);
+  const abrir = () => {
+    if (saliendo) return;
+    alTocar();
+    setSaliendo(true);
+    const rapido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.setTimeout(entrar, rapido ? 300 : 1550);
   };
+
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 overflow-hidden bg-fondo bg-damasco px-6 ${abriendo ? 'xv-abriendo' : ''}`}>
-      <p className="xv-intro-texto font-cinzel text-xs tracking-[0.3em] text-acento">HAS RECIBIDO UNA INVITACIÓN REAL</p>
-
-      <div className="xv-sobre relative aspect-[3/2] w-[min(320px,86vw)] [perspective:900px]">
-        {/* Fondo interior del sobre */}
-        <div className="xv-sobre-parte absolute inset-0 rounded-md bg-[#9EC8EA] shadow-[0_18px_40px_-18px_rgba(36,56,79,0.45)]" />
-
-        {/* Carta que sale del sobre */}
-        <div className="xv-carta absolute inset-x-[6%] top-[6%] bottom-[4%] flex flex-col items-center justify-center gap-1 rounded bg-white shadow-[0_4px_18px_rgba(36,56,79,0.18)]">
-          <Tiara className="h-6 w-10 text-perla" />
-          <span className="font-script text-[44px] leading-none text-acento">{EVENTO.nombreCorto}</span>
-          <span className="font-cinzel text-[10px] tracking-[0.3em] text-tinta-suave">MIS XV AÑOS</span>
-        </div>
-
-        {/* Frente del sobre (bolsillo) */}
-        <div className="xv-sobre-parte absolute inset-0 rounded-md bg-arco [clip-path:polygon(0_0,50%_54%,100%_0,100%_100%,0_100%)]" />
-        <div className="xv-sobre-parte absolute inset-0 rounded-md bg-perla/35 [clip-path:polygon(0_100%,50%_54%,100%_100%)]" />
-
-        {/* Flores en las esquinas del sobre */}
-        <svg className="xv-sobre-parte pointer-events-none absolute -left-8 -top-8 z-[15] h-32 w-32 overflow-visible" viewBox="0 0 80 80" aria-hidden="true">
-          <Ramo piezas={RAMO_SOBRE} />
-        </svg>
-        <svg className="xv-sobre-parte pointer-events-none absolute -bottom-8 -right-8 z-[15] h-32 w-32 rotate-180 overflow-visible" viewBox="0 0 80 80" aria-hidden="true">
-          <Ramo piezas={RAMO_SOBRE} />
-        </svg>
-
-        {/* Solapa */}
-        <div className="xv-solapa absolute inset-x-0 top-0 z-10 h-[62%] origin-top rounded-t-md bg-[#A9CFEC] [backface-visibility:hidden] [clip-path:polygon(0_0,100%_0,50%_100%)]" />
-
-        {/* Sello de cera */}
-        <button
-          onClick={click}
-          aria-label="Abrir invitación"
-          className="xv-sello absolute left-1/2 top-[62%] z-20 grid h-20 w-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-acento text-white shadow-[inset_0_0_0_4px_rgba(255,255,255,0.18),0_6px_16px_rgba(36,56,79,0.35)] transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-acento"
-        >
-          <span className="font-script text-4xl leading-none">{EVENTO.nombreCorto[0]}</span>
-        </button>
-
-        {/* Estallido de chispas */}
-        <div className="pointer-events-none absolute left-1/2 top-[62%] z-30" aria-hidden="true">
-          {ESTALLIDO.map(([ang, dist, tam], i) => {
-            const rad = (ang * Math.PI) / 180;
-            return (
-              <svg
-                key={i}
-                className="xv-chispa-estallido absolute -translate-x-1/2 -translate-y-1/2"
-                viewBox="0 0 24 24"
-                fill={i % 3 === 0 ? '#F8DFE6' : i % 3 === 1 ? '#FFFFFF' : '#B9DAF2'}
-                style={{
-                  width: tam,
-                  height: tam,
-                  ['--dx' as string]: `${Math.cos(rad) * dist}px`,
-                  ['--dy' as string]: `${Math.sin(rad) * dist}px`,
-                  animationDelay: `${(i % 4) * 30}ms`,
-                }}
-              >
-                <path d="M12 0c.7 6.3 5.7 11.3 12 12-6.3.7-11.3 5.7-12 12-.7-6.3-5.7-11.3-12-12C6.3 11.3 11.3 6.3 12 0z" />
-              </svg>
-            );
-          })}
-        </div>
-      </div>
-
-      <button onClick={click} className="xv-intro-texto xv-latido min-h-12 rounded-full border border-acento px-7 font-cinzel text-sm tracking-[0.2em] text-acento hover:bg-acento hover:text-white">
-        ABRIR INVITACIÓN
+    <div
+      className={`fixed inset-0 z-50 grid place-items-center overflow-hidden bg-tinta px-6 ${saliendo ? 'bo-saliendo' : ''}`}
+      role="dialog"
+      aria-label="Entrada a la invitación"
+    >
+      <button
+        type="button"
+        onClick={abrir}
+        className="bo-boleto group flex w-full max-w-[340px] text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-papel"
+        aria-label="Entrar a la invitación"
+      >
+        <span className="flex flex-1 flex-col gap-3 bg-rojo p-5 text-tinta">
+          <span className="font-poster text-xs tracking-[0.2em] text-papel">GIRA 1967—2027 · FECHA ÚNICA</span>
+          <span className="font-poster text-[56px] leading-[0.85]">{EVENTO.nombre.toUpperCase()}</span>
+          <span className="contorno font-poster text-[88px] leading-[0.8]">{EVENTO.edad}</span>
+          <span className="text-xs font-bold uppercase tracking-[0.14em]">
+            {EVENTO.fechaCorta} · {EVENTO.hora} · {EVENTO.lugar.nombre}
+          </span>
+        </span>
+        <span className="bo-talon relative flex w-[74px] flex-col items-center justify-center border-l-2 border-dashed border-rojo bg-papel">
+          <span className="font-poster text-sm tracking-[0.28em] [writing-mode:vertical-rl] rotate-180">ADMITE UNO</span>
+        </span>
       </button>
-
-      {/* Destello de luz que da paso a la invitación */}
-      <div className="xv-luz pointer-events-none absolute inset-0 opacity-0 [background:radial-gradient(circle_at_50%_45%,#FFFFFF_0%,rgba(255,255,255,0.95)_35%,rgba(248,223,230,0.6)_60%,rgba(244,249,253,0)_80%)]" aria-hidden="true" />
-    </div>
-  );
-}
-
-/* Lluvia de destellos y pétalos al revelar la invitación */
-const LLUVIA = Array.from({ length: 42 }, (_, i) => ({
-  x: (i * 37) % 100,
-  tam: 6 + ((i * 7) % 10),
-  dur: 2.6 + ((i * 13) % 20) / 10,
-  delay: ((i * 11) % 14) / 10,
-  petalo: i % 3 === 0,
-  color: ['#FFFFFF', '#B9DAF2', '#F8DFE6', '#8FBCE0'][i % 4],
-}));
-
-function Lluvia() {
-  return (
-    <div className="pointer-events-none fixed inset-0 z-40 overflow-hidden" aria-hidden="true">
-      {LLUVIA.map((p, i) =>
-        p.petalo ? (
-          <span
-            key={i}
-            className="xv-caer absolute -top-8 rounded-[60%_0_60%_0]"
-            style={{ left: `${p.x}%`, width: p.tam, height: p.tam * 1.3, background: p.color === '#FFFFFF' ? '#F8DFE6' : p.color, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s` }}
-          />
-        ) : (
-          <svg
-            key={i}
-            className="xv-caer absolute -top-8 drop-shadow-[0_0_4px_rgba(143,188,224,0.9)]"
-            viewBox="0 0 24 24"
-            fill={p.color}
-            style={{ left: `${p.x}%`, width: p.tam, height: p.tam, animationDuration: `${p.dur}s`, animationDelay: `${p.delay}s` }}
-          >
-            <path d="M12 0c.7 6.3 5.7 11.3 12 12-6.3.7-11.3 5.7-12 12-.7-6.3-5.7-11.3-12-12C6.3 11.3 11.3 6.3 12 0z" />
-          </svg>
-        ),
-      )}
+      <p className="bo-pulso pointer-events-none absolute inset-x-0 bottom-[max(48px,calc(env(safe-area-inset-bottom)+32px))] text-center font-poster text-sm tracking-[0.3em] text-papel">
+        TOCA EL BOLETO PARA ENTRAR
+      </p>
     </div>
   );
 }
 
 /* ---------- Secciones ---------- */
 
-/* Entrada de puerta ancha de palacio, en un lienzo de 340×480 */
-const ABERTURA = 'M26 480 V150 A144 120 0 0 1 314 150 V480 Z';
-
 function Portada() {
   return (
-    <header id="inicio" className="flex scroll-mt-24 flex-col items-center gap-7 pt-8">
-      <div className="xv-ventana relative w-[min(330px,84vw)] aspect-[340/480]">
-        {DESTELLOS.map(([x, y, s], i) => (
-          <Destello key={i} style={{ left: `${x}%`, top: `${y}%`, width: s, height: s, animationDelay: `-${i * 0.45}s` }} />
-        ))}
-
-        <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 340 480" role="img" aria-label="Entrada de palacio con la quinceañera al centro">
-          <defs>
-            <clipPath id="pz-abertura">
-              <path d={ABERTURA} />
-            </clipPath>
-            <linearGradient id="pz-muro" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#DCEEFB" />
-              <stop offset="1" stopColor="#B9DAF2" />
-            </linearGradient>
-            <radialGradient id="pz-luz" cx="0.5" cy="0.4" r="0.55">
-              <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
-              <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="pz-piso" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#E3F1FC" />
-              <stop offset="1" stopColor="#C6E2F8" />
-            </linearGradient>
-            <linearGradient id="pz-marmol" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="#F4F9FD" />
-              <stop offset="0.5" stopColor="#FFFFFF" />
-              <stop offset="1" stopColor="#E6F1FA" />
-            </linearGradient>
-            <linearGradient id="pz-hoja" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stopColor="#FFFFFF" />
-              <stop offset="1" stopColor="#CFE6F9" />
-            </linearGradient>
-          </defs>
-
-          {/* Interior del salón */}
-          <g clipPath="url(#pz-abertura)">
-            <rect x="0" y="0" width="340" height="480" fill="url(#pz-muro)" />
-            {/* Ventanal del fondo */}
-            <path d="M130 400 V230 A40 40 0 0 1 210 230 V400 Z" fill="#FFFFFF" opacity="0.55" />
-            <path d="M170 190 V400 M130 300 H210" stroke="#B9DAF2" strokeWidth="1.5" />
-            <ellipse cx="170" cy="250" rx="150" ry="170" fill="url(#pz-luz)" />
-            {/* Candil */}
-            <g opacity="0.85">
-              <path d="M170 30 V70" stroke="#A9C4DC" strokeWidth="1" />
-              <path d="M146 78 Q170 96 194 78" stroke="#A9C4DC" strokeWidth="1.4" fill="none" />
-              {[146, 158, 170, 182, 194].map((x) => (
-                <circle key={x} className="xv-chispa" cx={x} cy={x === 170 ? 86 : 80 + Math.abs(170 - x) / 6} r="2" fill="#FFFFFF" />
-              ))}
-            </g>
-            {/* Piso de mármol en perspectiva */}
-            <rect x="0" y="400" width="340" height="80" fill="url(#pz-piso)" />
-            <path d="M170 360 L-80 480 M170 360 L20 480 M170 360 L95 480 M170 360 L170 480 M170 360 L245 480 M170 360 L320 480 M170 360 L420 480 M0 418 H340 M0 444 H340" stroke="#A9D0EF" strokeWidth="1" opacity="0.7" />
-            {/* Puertas abiertas hacia adentro */}
-            <path d="M26 480 V150 C34 116 52 104 74 110 V440 Z" fill="url(#pz-hoja)" stroke="#A9D0EF" strokeWidth="1" />
-            <path d="M314 480 V150 C306 116 288 104 266 110 V440 Z" fill="url(#pz-hoja)" stroke="#A9D0EF" strokeWidth="1" />
-            <path d="M36 200 L64 190 V290 L36 300 Z M36 320 L64 312 V420 L36 434 Z M304 200 L276 190 V290 L304 300 Z M304 320 L276 312 V420 L304 434 Z" fill="none" stroke="#A9D0EF" strokeWidth="1" />
-            <circle cx="66" cy="300" r="2" fill="#8FBCE0" />
-            <circle cx="274" cy="300" r="2" fill="#8FBCE0" />
-            {/* Título */}
-            <g transform="translate(150 50) scale(0.5)" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M6 42 Q40 33 74 42" />
-              <path d="M6 42 C8 30 14 24 19 28 C21 20 27 15 31 19 C33 10 37 5 40 3 C43 5 47 10 49 19 C53 15 59 20 61 28 C66 24 72 30 74 42" />
-              <circle cx="40" cy="7.5" r="2.6" fill="#FFFFFF" stroke="none" />
-            </g>
-            <text x="170" y="92" textAnchor="middle" fontFamily="Cinzel, Georgia, serif" fontSize="12.5" letterSpacing="4" fill="#1E3550">MIS XV AÑOS</text>
-            {/* Quinceañera */}
-            <Princesa x="74" y="112" width="192" height="346" />
-            {/* Reflejo que cruza la entrada */}
-            <rect className="xv-reflejo" x="0" y="-40" width="100" height="560" fill="url(#pz-luz)" opacity="0.5" style={{ transformBox: 'fill-box' }} />
-          </g>
-
-          {/* Marco: pilastras, archivolta con dovelas, perlas y clave */}
-          <g>
-            <path d="M0 480 V150 A170 140 0 0 1 340 150 V480 H314 V150 A144 120 0 0 0 26 150 V480 Z" fill="url(#pz-marmol)" stroke="#8FBCE0" strokeWidth="1.2" />
-            {Array.from({ length: 15 }, (_, i) => {
-              const a = Math.PI - ((i + 1) * Math.PI) / 16;
-              return (
-                <path
-                  key={i}
-                  d={`M${170 + 144 * Math.cos(a)} ${150 - 120 * Math.sin(a)} L${170 + 170 * Math.cos(a)} ${150 - 140 * Math.sin(a)}`}
-                  stroke="#BFDDF3"
-                  strokeWidth="1"
-                />
-              );
-            })}
-            {/* Acanalado de las pilastras */}
-            <path d="M8 168 V462 M13 168 V462 M18 168 V462 M322 168 V462 M327 168 V462 M332 168 V462" stroke="#D3E6F5" strokeWidth="1" />
-            {/* Capiteles y basas */}
-            <rect x="-5" y="146" width="36" height="12" rx="1.5" fill="#FFFFFF" stroke="#8FBCE0" />
-            <rect x="309" y="146" width="36" height="12" rx="1.5" fill="#FFFFFF" stroke="#8FBCE0" />
-            <rect x="-5" y="466" width="36" height="14" rx="1.5" fill="#FFFFFF" stroke="#8FBCE0" />
-            <rect x="309" y="466" width="36" height="14" rx="1.5" fill="#FFFFFF" stroke="#8FBCE0" />
-            {/* Collar de perlas siguiendo el arco */}
-            <path d="M13 146 A157 130 0 0 1 327 146" fill="none" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" strokeDasharray="0 10" />
-            <path d="M13 146 A157 130 0 0 1 327 146" fill="none" stroke="#8FBCE0" strokeWidth="1.4" strokeLinecap="round" strokeDasharray="0 10" />
-            {/* Clave con tiara */}
-            <path d="M156 4 L184 4 L180 34 L160 34 Z" fill="#FFFFFF" stroke="#8FBCE0" />
-            <g transform="translate(160 12) scale(0.25)" fill="none" stroke="#8FBCE0" strokeWidth="4" strokeLinecap="round">
-              <path d="M6 42 C8 30 14 24 19 28 C21 20 27 15 31 19 C33 10 37 5 40 3 C43 5 47 10 49 19 C53 15 59 20 61 28 C66 24 72 30 74 42 Z" />
-            </g>
-          </g>
-
-          {/* Guirnaldas, enredaderas y arreglos de flores */}
-          <Ramo piezas={RAMO_ESQUINA} />
-          <Ramo piezas={RAMO_ESQUINA} transform="matrix(-1 0 0 1 340 0)" />
-          <Ramo piezas={RAMO_BASE} />
-          <Ramo piezas={RAMO_BASE} transform="matrix(-1 0 0 1 340 0)" />
-          <Ramo piezas={RAMO_CLAVE} />
-        </svg>
+    <header id="inicio" className="relative">
+      <div className="relative h-[min(78vh,560px)] overflow-hidden bg-tinta">
+        <img
+          src={foto(EVENTO.fotoPortada)}
+          alt={`${EVENTO.nombre} con lentes de sol y saco azul`}
+          className="foto-poster h-full w-full object-cover object-[50%_22%] opacity-90 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent from-40% to-rojo" />
+        <div className="absolute inset-x-5 top-[max(20px,calc(env(safe-area-inset-top)+12px))] flex justify-between font-poster text-[13px] tracking-[0.16em] text-papel">
+          <span>GIRA 1967—2027</span>
+          <span>FECHA ÚNICA</span>
+        </div>
       </div>
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="font-script text-[clamp(64px,20vw,84px)] leading-none text-acento [text-shadow:0_2px_16px_rgba(143,188,224,0.6)]">
-          {EVENTO.nombreCorto}
+      <div className="relative -mt-28 px-5">
+        <h1 className="po-nombre font-poster text-[clamp(76px,24vw,112px)] leading-[0.85] tracking-[-0.01em]">
+          {EVENTO.nombre.toUpperCase()}
         </h1>
-        <p className="font-cinzel text-[13px] tracking-[0.16em] text-tinta-fuerte">GLORIA REGINA RAMOS FERNÁNDEZ</p>
+        <p className="contorno font-poster text-[clamp(140px,44vw,200px)] leading-[0.8]" aria-label={`${EVENTO.edad} años`}>
+          {EVENTO.edad}
+        </p>
+        <p className="mt-3 text-sm font-bold uppercase tracking-[0.14em]">Seis décadas en el escenario</p>
+        <p className="mt-1 text-sm">
+          {EVENTO.nacimiento} → {EVENTO.cumple}
+        </p>
       </div>
-      <Filigrana />
-      <p className="max-w-[310px] text-center font-cinzel text-[15px] leading-[1.8] text-tinta-media">
-        Como en los cuentos, este día llega una sola vez. Mis padres y yo tenemos el honor de invitarte a celebrar mis quince años.
-      </p>
     </header>
   );
 }
 
-function Fecha() {
+function CuentaRegresiva() {
   const { dias, horas, minutos, segundos } = useCuentaRegresiva();
-  const items = [
-    [dias, 'Días'],
-    [horas, 'Horas'],
-    [minutos, 'Min'],
-    [segundos, 'Seg'],
+  const celdas = [
+    ['Días', dias],
+    ['Horas', horas],
+    ['Min', minutos],
+    ['Seg', segundos],
   ] as const;
   return (
-    <section id="fecha" className="flex scroll-mt-24 flex-col items-center gap-5 text-center" aria-label="Fecha">
-      <div className="flex flex-col items-center gap-1">
-        <p className="font-cinzel text-[13px] tracking-[0.3em] text-acento">SÁBADO</p>
-        <p className="font-cinzel text-[clamp(32px,10vw,40px)] font-medium tracking-[0.06em]">22 · V · 2027</p>
-      </div>
-      <div className="relative grid w-full grid-cols-4 rounded-lg border border-borde bg-white py-4 outline outline-1 outline-offset-4 outline-borde">
-        <svg className="pointer-events-none absolute -left-6 -top-6 h-16 w-16 overflow-visible" viewBox="0 0 80 80" aria-hidden="true">
-          <Ramo piezas={RAMO_SOBRE} />
-        </svg>
-        <svg className="pointer-events-none absolute -bottom-6 -right-6 h-16 w-16 rotate-180 overflow-visible" viewBox="0 0 80 80" aria-hidden="true">
-          <Ramo piezas={RAMO_SOBRE} />
-        </svg>
-        {items.map(([valor, etiqueta], i) => (
-          <div key={etiqueta} className={`flex flex-col gap-0.5 ${i > 0 ? 'border-l border-borde' : ''}`}>
-            <span className="font-cinzel text-2xl font-medium tabular-nums">{String(valor).padStart(2, '0')}</span>
-            <span className="text-[11px] uppercase tracking-[0.14em] text-tinta-suave">{etiqueta}</span>
+    <section aria-label="Cuenta regresiva" className="px-5">
+      <h2 className="mb-2 font-poster text-lg tracking-[0.14em]">FALTAN</h2>
+      <div className="grid grid-cols-4 gap-1.5">
+        {celdas.map(([t, v]) => (
+          <div key={t} className="flex flex-col items-center bg-tinta py-3 text-papel">
+            <span className="font-poster text-[34px] leading-none tabular-nums">{String(v).padStart(2, '0')}</span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">{t}</span>
           </div>
         ))}
       </div>
@@ -713,166 +133,122 @@ function Fecha() {
   );
 }
 
-function TarjetaArco({ icono, titulo, hora, lugar, detalle, mapa }: {
-  icono: React.ReactNode; titulo: string; hora: string; lugar: string; detalle: string; mapa: string;
-}) {
+function Gira() {
   return (
-    <div className="relative flex min-w-0 flex-col drop-shadow-[0_10px_14px_rgba(62,110,149,0.14)]">
-      {/* Remate de ventana de palacio */}
-      <div className="relative">
-        <svg className="block w-full overflow-visible" viewBox="0 0 200 76" aria-hidden="true">
-          <path d="M0 76 V50 C0 36 40 33 62 24 C82 16 95 10 100 1 C105 10 118 16 138 24 C160 33 200 36 200 50 V76 Z" fill="#FFFFFF" />
-          <path d="M0.75 76 V50 C0.75 36 40 33 62 24 C82 16 95 10 100 1 C105 10 118 16 138 24 C160 33 199.25 36 199.25 50 V76" fill="none" stroke="#D3E6F5" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-          <path d="M9 76 V53 C9 42 44 40 66 31 C84 24 96 18 100 11 C104 18 116 24 134 31 C156 40 191 42 191 53 V76" fill="none" stroke="#B9DAF2" strokeOpacity="0.7" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-          <Ramo piezas={RAMO_TARJETA} transform="translate(100 6) scale(1.8) translate(-100 -6)" />
-        </svg>
-        <span className="absolute inset-x-0 bottom-1 flex justify-center text-acento">{icono}</span>
-      </div>
-      <div className="relative flex flex-1 flex-col items-center gap-1.5 rounded-b-lg border-x-[1.5px] border-b-[1.5px] border-borde bg-white px-3.5 pb-5 pt-2 text-center">
-        <span className="pointer-events-none absolute inset-x-[calc(4.5%-1.5px)] bottom-1.5 top-0 rounded-b-md border-x border-b border-arco/70" aria-hidden="true" />
-      <h2 className="font-cinzel text-base font-semibold">{titulo}</h2>
-      <p className="text-xl font-bold">{hora} hrs</p>
-      <p className="text-[13px] font-bold text-tinta-media">{lugar}</p>
-      <p className="text-xs leading-snug text-tinta-suave">{detalle}</p>
-      <a
-        href={mapa}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-1 inline-flex min-h-11 items-center border-b border-perla font-cinzel text-xs tracking-[0.14em] text-acento hover:text-tinta"
-      >
-        CÓMO LLEGAR
-      </a>
-      </div>
-    </div>
-  );
-}
-
-/* Mapa incrustado de Google Maps con las dos ubicaciones */
-const VISTAS_MAPA = [
-  { id: 'templo', etiqueta: 'Templo', src: `https://maps.google.com/maps?q=${encodeURIComponent(EVENTO.misa.busqueda)}&z=16&output=embed` },
-  { id: 'fiesta', etiqueta: 'Casa Amada', src: `https://maps.google.com/maps?q=${encodeURIComponent(EVENTO.fiesta.busqueda)}&z=15&output=embed` },
-  {
-    id: 'ruta',
-    etiqueta: 'Ruta',
-    src: `https://maps.google.com/maps?saddr=${encodeURIComponent(EVENTO.misa.busqueda)}&daddr=${encodeURIComponent(EVENTO.fiesta.busqueda)}&output=embed`,
-  },
-] as const;
-
-function Mapa() {
-  const [vista, setVista] = React.useState<(typeof VISTAS_MAPA)[number]['id']>('templo');
-  const actual = VISTAS_MAPA.find((v) => v.id === vista)!;
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-borde bg-white p-3 shadow-[0_10px_30px_-18px_rgba(62,110,149,0.45)]">
-      <div className="grid grid-cols-3 gap-1 rounded-full bg-fondo p-1" role="tablist" aria-label="Ubicaciones en el mapa">
-        {VISTAS_MAPA.map((v) => (
-          <button
-            key={v.id}
-            role="tab"
-            aria-selected={vista === v.id}
-            onClick={() => setVista(v.id)}
-            className={`min-h-11 rounded-full font-cinzel text-xs tracking-[0.1em] transition-colors ${
-              vista === v.id ? 'bg-acento text-white' : 'text-tinta-media hover:text-tinta'
-            }`}
+    <section id="gira" aria-label="La gira" className="scroll-mt-6 px-5">
+      <h2 className="mb-3 font-poster text-lg tracking-[0.14em]">FECHAS DE LA GIRA</h2>
+      <ol className="flex flex-col">
+        {EVENTO.gira.map((g) => (
+          <li
+            key={g.epoca}
+            className="grid grid-cols-[64px_1fr_56px] items-center gap-3 border-t-2 border-tinta py-2.5 last:border-b-2"
           >
-            {v.etiqueta}
-          </button>
+            <span className="font-poster text-xl tabular-nums">{g.epoca}</span>
+            <span className="font-poster text-lg uppercase tracking-[0.03em]">{g.titulo}</span>
+            <img src={foto(g.foto)} alt={`${EVENTO.nombre}, ${g.epoca}`} loading="lazy" className="foto-poster aspect-[3/4] w-14 object-cover" />
+          </li>
         ))}
-      </div>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-fondo">
-        <iframe
-          key={actual.id}
-          title={`Mapa: ${actual.etiqueta}`}
-          src={actual.src}
-          className="absolute inset-0 h-full w-full border-0"
+      </ol>
+    </section>
+  );
+}
+
+function FechaUnica() {
+  return (
+    <section id="fecha" aria-label="Fecha y lugar" className="scroll-mt-6 bg-tinta px-5 py-8 text-papel">
+      <p className="font-poster text-sm tracking-[0.2em] text-rojo">FECHA ÚNICA</p>
+      <h2 className="mt-1 font-poster text-[44px] uppercase leading-[0.95]">{EVENTO.fechaTexto}</h2>
+      <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-5 gap-y-3 text-[15px]">
+        <dt className="pt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">Puertas</dt>
+        <dd className="font-poster text-2xl leading-none">{EVENTO.hora.toUpperCase()}</dd>
+        <dt className="pt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">Lugar</dt>
+        <dd>
+          <span className="font-poster text-2xl uppercase leading-none">{EVENTO.lugar.nombre}</span>
+          {EVENTO.lugar.direccion && <span className="mt-1 block text-sm opacity-80">{EVENTO.lugar.direccion}</span>}
+        </dd>
+        <dt className="pt-0.5 text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">Vestimenta</dt>
+        <dd>{EVENTO.vestimenta}</dd>
+      </dl>
+      <figure className="mt-6">
+        <img
+          src={foto(EVENTO.lugar.foto)}
+          alt={`Jardín de ${EVENTO.lugar.nombre}: arcos blancos, cúpulas y alberca`}
           loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          allowFullScreen
+          className="aspect-[3/2] w-full object-cover"
         />
+        <figcaption className="mt-2 font-poster text-xs tracking-[0.2em] text-rojo">EL ESCENARIO · {EVENTO.lugar.nombre.toUpperCase()}</figcaption>
+      </figure>
+      <iframe
+        title={`Mapa de ${EVENTO.lugar.nombre}`}
+        src={mapaEmbed()}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className="mt-4 aspect-[4/3] w-full border-0 bg-[#2A2A2A] grayscale"
+      />
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <a
+          href={mapaUrl()}
+          target="_blank"
+          rel="noopener"
+          className="flex min-h-12 items-center justify-center gap-2 border-2 border-papel text-sm font-bold uppercase tracking-[0.1em] hover:bg-papel hover:text-tinta"
+        >
+          <MapPin className="h-4 w-4" aria-hidden="true" /> Ver mapa
+        </a>
+        <a
+          href={enlaceCalendario()}
+          target="_blank"
+          rel="noopener"
+          className="flex min-h-12 items-center justify-center gap-2 border-2 border-papel text-sm font-bold uppercase tracking-[0.1em] hover:bg-papel hover:text-tinta"
+        >
+          <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Calendario
+        </a>
       </div>
-      <p className="text-center text-xs text-tinta-suave">
-        {vista === 'ruta' ? 'Del templo a Casa Amada' : vista === 'templo' ? EVENTO.misa.direccion : EVENTO.fiesta.direccion}
-      </p>
+    </section>
+  );
+}
+
+function Tira() {
+  const fotos = EVENTO.gira.filter((g) => g.foto !== EVENTO.fotoPortada);
+  return (
+    <div className="grid grid-cols-5 gap-1 px-5" aria-hidden="true">
+      {fotos.map((g) => (
+        <img key={g.epoca} src={foto(g.foto)} alt="" loading="lazy" className="foto-poster aspect-[3/4] w-full object-cover" />
+      ))}
     </div>
   );
 }
 
-function Programa() {
+function Boleto({ confirmar }: { confirmar: () => void }) {
   return (
-    <section id="lugares" className="flex scroll-mt-24 flex-col gap-3" aria-label="Programa">
-      <div className="grid grid-cols-2 gap-3">
-        <TarjetaArco
-          icono={<IconoTemplo />}
-          titulo="Misa"
-          hora={EVENTO.misa.hora}
-          lugar={EVENTO.misa.lugar}
-          detalle={EVENTO.misa.direccion}
-          mapa={EVENTO.misa.mapa}
-        />
-        <TarjetaArco
-          icono={<IconoCopa />}
-          titulo="Recepción"
-          hora={EVENTO.fiesta.hora}
-          lugar={EVENTO.fiesta.lugar}
-          detalle={EVENTO.fiesta.direccion}
-          mapa={EVENTO.fiesta.mapa}
-        />
+    <section id="confirmar" aria-label="Confirmar asistencia" className="scroll-mt-6 px-5">
+      <div className="grid grid-cols-[1fr_80px] bg-papel">
+        <div className="flex flex-col gap-1.5 border-r-2 border-dashed border-rojo p-4">
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-rojo">Admite</span>
+          <b className="font-poster text-2xl font-normal leading-tight">TÚ + TUS GANAS DE FIESTA</b>
+          <small className="text-[13px] leading-snug">
+            {EVENTO.fechaTexto} · Puertas {EVENTO.hora}
+            <br />
+            {EVENTO.lugar.nombre} · Vestimenta casual
+          </small>
+        </div>
+        <div className="grid place-items-center">
+          <span className="rotate-180 font-poster text-base tracking-[0.22em] [writing-mode:vertical-rl]">
+            FAB · {EVENTO.edad}
+          </span>
+        </div>
       </div>
-      <Mapa />
-      <a
-        href={enlaceCalendario()}
-        target="_blank"
-        rel="noreferrer"
-        className="flex min-h-14 items-center justify-center gap-2.5 rounded-lg bg-tinta px-5 font-cinzel text-sm tracking-[0.14em] text-white hover:bg-acento"
+      <button
+        type="button"
+        onClick={confirmar}
+        className="mt-3 flex min-h-[56px] w-full items-center justify-center gap-2 bg-tinta font-poster text-lg tracking-[0.16em] text-papel hover:bg-rojo-oscuro focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tinta"
       >
-        <CalendarPlus className="h-4 w-4 text-perla" aria-hidden="true" />
-        AGREGAR A MI CALENDARIO
-      </a>
+        <Ticket className="h-5 w-5" aria-hidden="true" /> APARTAR MI LUGAR
+      </button>
     </section>
   );
 }
 
-function Padres() {
-  return (
-    <section className="flex flex-col items-center gap-2 text-center">
-      <h2 className="font-script text-3xl text-acento">Mis padres</h2>
-      <p className="font-cinzel text-[15px] leading-[1.8] tracking-[0.06em]">
-        {EVENTO.padres[0]}
-        <br />
-        {EVENTO.padres[1]}
-      </p>
-    </section>
-  );
-}
-
-function Vestimenta() {
-  return (
-    <section id="vestimenta" className="flex scroll-mt-24 flex-col items-center gap-3.5 text-center">
-      <h2 className="font-cinzel text-[15px] tracking-[0.2em]">CÓDIGO DE VESTIMENTA</h2>
-      <p className="text-sm text-tinta-suave">Formal</p>
-      <div className="flex gap-6">
-        {EVENTO.vestimenta.map((v) => (
-          <div key={v.nombre} className="flex flex-col items-center gap-1.5">
-            <div className="h-12 w-[34px] rounded-b rounded-t-[17px]" style={{ background: v.color }} />
-            <span className="text-xs">{v.nombre}</span>
-          </div>
-        ))}
-      </div>
-      <p className="text-xs text-tinta-suave">El azul cielo queda reservado para la quinceañera.</p>
-    </section>
-  );
-}
-
-function Regalo() {
-  return (
-    <section id="regalo" className="flex scroll-mt-24 flex-col items-center gap-2 text-center">
-      <span className="text-acento"><IconoSobre /></span>
-      <h2 className="font-cinzel text-base tracking-[0.12em]">LLUVIA DE SOBRES</h2>
-      <p className="max-w-[300px] text-sm leading-relaxed text-tinta-suave">
-        Tu presencia es mi mejor regalo; si deseas tener un detalle, con gusto recibiré un sobre.
-      </p>
-    </section>
-  );
-}
+/* ---------- Confirmación por WhatsApp ---------- */
 
 function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }) {
   const [nombre, setNombre] = React.useState('');
@@ -890,8 +266,8 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     const texto = asiste
-      ? `¡Hola! Soy ${nombre.trim()} y confirmo mi asistencia a los XV años de ${EVENTO.nombreCorto} el 22 de mayo. Seremos ${personas} persona${personas > 1 ? 's' : ''}.`
-      : `¡Hola! Soy ${nombre.trim()}. Muchas gracias por la invitación a los XV años de ${EVENTO.nombreCorto}; lamentablemente no podré asistir.`;
+      ? `¡Hola! Soy ${nombre.trim()} y confirmo mi asistencia a los ${EVENTO.edad} de ${EVENTO.nombre} el 9 de enero. Seremos ${personas} persona${personas > 1 ? 's' : ''}.`
+      : `¡Hola! Soy ${nombre.trim()}. Muchas gracias por la invitación a los ${EVENTO.edad} de ${EVENTO.nombre}; lamentablemente no podré asistir.`;
     window.open(`https://wa.me/${EVENTO.whatsapp}?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
     cerrar();
   };
@@ -900,16 +276,21 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
     <dialog
       ref={dialogo}
       onClose={cerrar}
-      className="m-auto w-[calc(100%-32px)] max-w-md rounded-t-[120px] rounded-b-2xl bg-white p-0 text-tinta backdrop:bg-tinta/60"
+      className="m-auto w-[calc(100%-32px)] max-w-md bg-papel p-0 text-tinta backdrop:bg-tinta/75"
     >
-      <form onSubmit={enviar} className="flex flex-col gap-5 px-6 pb-6 pt-12">
-        <button type="button" onClick={cerrar} aria-label="Cerrar" className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-borde">
+      <form onSubmit={enviar} className="flex flex-col gap-5 p-6 pt-7">
+        <button
+          type="button"
+          onClick={cerrar}
+          aria-label="Cerrar"
+          className="absolute right-3 top-3 grid h-11 w-11 place-items-center border-2 border-tinta hover:bg-tinta hover:text-papel"
+        >
           <X className="h-5 w-5" />
         </button>
-        <div className="flex flex-col items-center gap-2 text-center">
-          <Tiara className="h-7 w-12" color="#3E6E95" />
-          <h2 className="font-cinzel text-lg tracking-[0.12em]">CONFIRMAR ASISTENCIA</h2>
-          <p className="text-sm text-tinta-suave">Se abrirá WhatsApp con tu mensaje listo para enviar.</p>
+        <div className="flex flex-col gap-1 pr-12">
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-rojo">Fecha única · {EVENTO.fechaCorta}</span>
+          <h2 className="font-poster text-3xl leading-none">APARTA TU LUGAR</h2>
+          <p className="text-sm">Se abrirá WhatsApp con tu mensaje listo para enviar.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -919,12 +300,12 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
               type="button"
               onClick={() => setAsiste(v)}
               aria-pressed={asiste === v}
-              className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border text-sm font-bold ${
-                asiste === v ? 'border-acento bg-acento text-white' : 'border-borde'
+              className={`flex min-h-12 items-center justify-center gap-2 border-2 text-sm font-bold ${
+                asiste === v ? 'border-tinta bg-tinta text-papel' : 'border-tinta/25'
               }`}
             >
               {asiste === v && <Check className="h-4 w-4" aria-hidden="true" />}
-              {v ? 'Sí asistiré' : 'No podré ir'}
+              {v ? 'Ahí estaré' : 'No podré ir'}
             </button>
           ))}
         </div>
@@ -937,7 +318,7 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Nombre y apellido"
-            className="min-h-12 rounded-lg border border-borde px-4 text-base font-normal outline-none focus:border-acento"
+            className="min-h-12 border-2 border-tinta/25 bg-white px-4 text-base font-normal outline-none focus:border-tinta"
           />
         </label>
 
@@ -948,7 +329,7 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
               id="rsvp-personas"
               value={personas}
               onChange={(e) => setPersonas(Number(e.target.value))}
-              className="min-h-12 rounded-lg border border-borde bg-white px-4 text-base font-normal outline-none focus:border-acento"
+              className="min-h-12 border-2 border-tinta/25 bg-white px-4 text-base font-normal outline-none focus:border-tinta"
             >
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -957,7 +338,7 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
           </label>
         )}
 
-        <button type="submit" className="min-h-[54px] rounded-full bg-acento font-cinzel text-[15px] tracking-[0.16em] text-white hover:bg-tinta">
+        <button type="submit" className="min-h-[54px] bg-rojo font-poster text-lg tracking-[0.16em] text-tinta hover:bg-rojo-oscuro hover:text-papel">
           ENVIAR POR WHATSAPP
         </button>
       </form>
@@ -965,11 +346,9 @@ function Confirmar({ abierto, cerrar }: { abierto: boolean; cerrar: () => void }
   );
 }
 
-/* ---------- Header rosa y navegación tipo app ---------- */
-
-/* Música de fondo con el reproductor de YouTube (oculto).
+/* ---------- Música de fondo (YouTube oculto) ----------
    Los navegadores no dejan sonar audio sin un toque del usuario, así que
-   arranca al tocar el sello del sobre (o el primer toque en la página). */
+   arranca al tocar el boleto de entrada (o el primer toque en la página). */
 declare global {
   interface Window { YT?: any; onYouTubeIframeAPIReady?: () => void }
 }
@@ -1000,7 +379,7 @@ function useMusica(videoId: string) {
     const crear = () => {
       if (creado || player.current) return;
       creado = true;
-      new window.YT.Player('xv-musica', {
+      new window.YT.Player('musica', {
         videoId,
         width: 1,
         height: 1,
@@ -1022,7 +401,6 @@ function useMusica(videoId: string) {
       s.src = 'https://www.youtube.com/iframe_api';
       document.head.appendChild(s);
     }
-    // Respaldo: si el primer intento no sonó, cualquier toque la inicia
     const alTocar = () => tocar();
     document.addEventListener('pointerdown', alTocar);
     return () => document.removeEventListener('pointerdown', alTocar);
@@ -1050,150 +428,63 @@ function BotonMusica({ musica }: { musica: Musica }) {
       onClick={musica.activa ? musica.pausar : musica.reproducir}
       aria-label={musica.activa ? 'Pausar música' : 'Reproducir música'}
       aria-pressed={musica.activa}
-      className={`grid h-11 w-11 place-items-center rounded-full border border-rosa-borde bg-white/70 text-rosa-tinta hover:bg-white ${musica.activa ? 'xv-latido' : ''}`}
+      className={`fixed right-[max(16px,env(safe-area-inset-right))] top-[max(56px,calc(env(safe-area-inset-top)+48px))] z-40 grid h-11 w-11 place-items-center rounded-full bg-tinta/80 text-papel backdrop-blur ${musica.activa ? 'po-latido' : ''}`}
     >
-      <Icono className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
+      <Icono className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
     </button>
   );
 }
 
-function Encabezado({ musica }: { musica: Musica }) {
+function BarraConfirmar({ confirmar }: { confirmar: () => void }) {
   return (
-    <header className="xv-header sticky top-[env(safe-area-inset-top)] z-30 border-b border-rosa-borde bg-rosa/95 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-md items-center justify-between px-[max(16px,env(safe-area-inset-left))]">
-        <a href="#inicio" className="flex min-h-11 items-center gap-2" aria-label="Ir al inicio">
-          <Tiara className="h-5 w-8 text-rosa-tinta" />
-          <span className="font-script text-2xl leading-none text-tinta">{EVENTO.nombreCorto}</span>
-          <span className="font-cinzel text-xs tracking-[0.2em] text-rosa-tinta">XV</span>
-        </a>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-rosa-borde bg-white/70 px-3 py-1 font-cinzel text-[11px] tracking-[0.14em] text-tinta">
-            22 · 05 · 2027
-          </span>
-          <BotonMusica musica={musica} />
-        </div>
-      </div>
-    </header>
-  );
-}
-
-const SECCIONES = [
-  { id: 'inicio', etiqueta: 'Inicio', Icono: Crown },
-  { id: 'fecha', etiqueta: 'Fecha', Icono: CalendarHeart },
-  { id: 'lugares', etiqueta: 'Lugares', Icono: MapPin },
-  { id: 'vestimenta', etiqueta: 'Vestir', Icono: Shirt },
-] as const;
-
-function useSeccionActiva() {
-  const [activa, setActiva] = React.useState<string>('inicio');
-  React.useEffect(() => {
-    const ids = [...SECCIONES.map((s) => s.id), 'regalo'];
-    const obs = new IntersectionObserver(
-      (entradas) => {
-        const visible = entradas.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiva(visible.target.id === 'regalo' ? 'vestimenta' : visible.target.id);
-      },
-      { rootMargin: '-35% 0px -45% 0px', threshold: [0, 0.25, 0.5, 1] },
-    );
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
-  }, []);
-  return activa;
-}
-
-function Navegacion({ confirmar }: { confirmar: () => void }) {
-  const activa = useSeccionActiva();
-  return (
-    <nav
-      aria-label="Secciones de la invitación"
-      className="xv-nav-entrar fixed inset-x-0 bottom-0 z-40 px-[max(12px,env(safe-area-inset-left))] pb-[max(12px,env(safe-area-inset-bottom))]"
-    >
-      <div className="mx-auto flex max-w-md items-center gap-1 rounded-[26px] border border-white/70 bg-white/80 p-1.5 shadow-[0_12px_32px_-12px_rgba(36,56,79,0.35)] backdrop-blur-xl">
-        {SECCIONES.map(({ id, etiqueta, Icono }) => {
-          const on = activa === id;
-          return (
-            <a
-              key={id}
-              href={`#${id}`}
-              aria-current={on ? 'true' : undefined}
-              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[20px] text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
-                on ? 'bg-rosa text-tinta' : 'text-tinta-suave hover:text-tinta'
-              }`}
-            >
-              <Icono className={`h-5 w-5 transition-transform ${on ? 'scale-110 text-rosa-tinta' : ''}`} strokeWidth={1.7} aria-hidden="true" />
-              {etiqueta}
-            </a>
-          );
-        })}
+    <div className="po-barra fixed inset-x-0 bottom-0 z-30 bg-tinta pb-[env(safe-area-inset-bottom)] pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))]">
+      <div className="mx-auto flex max-w-md items-center justify-between gap-3 py-2.5">
+        <span className="font-poster text-sm leading-tight tracking-[0.1em] text-papel">
+          {EVENTO.fechaCorta} · {EVENTO.hora.toUpperCase()}
+          <span className="block text-[11px] tracking-[0.14em] opacity-60">{EVENTO.lugar.nombre.toUpperCase()}</span>
+        </span>
         <button
+          type="button"
           onClick={confirmar}
-          className="flex min-h-[52px] flex-[1.3] flex-col items-center justify-center gap-0.5 rounded-[20px] bg-acento text-[10px] font-bold uppercase tracking-[0.08em] text-white hover:bg-tinta"
+          className="min-h-11 bg-rojo px-5 font-poster text-sm tracking-[0.14em] text-tinta hover:bg-papel"
         >
-          <Heart className="h-5 w-5" strokeWidth={1.7} aria-hidden="true" />
-          Confirmar
+          CONFIRMAR
         </button>
       </div>
-    </nav>
+    </div>
   );
 }
 
 export default function App() {
   const [rsvp, setRsvp] = React.useState(false);
-  // ?abierta en la URL salta el sobre (útil para revisar o compartir directo)
-  const saltarSobre = new URLSearchParams(window.location.search).has('abierta');
-  const [sobreAbierto, setSobreAbierto] = React.useState(saltarSobre);
-  const [revelado, setRevelado] = React.useState(saltarSobre);
-  const [lluvia, setLluvia] = React.useState(false);
+  // ?abierta en la URL salta la entrada (útil para revisar o compartir directo)
+  const saltar = new URLSearchParams(window.location.search).has('abierta');
+  const [dentro, setDentro] = React.useState(saltar);
   const musica = useMusica(EVENTO.musicaYoutube);
 
   React.useEffect(() => {
-    document.documentElement.style.overflow = sobreAbierto ? '' : 'hidden';
-  }, [sobreAbierto]);
-
-  const revelar = () => {
-    setRevelado(true);
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setLluvia(true);
-      window.setTimeout(() => setLluvia(false), 6000);
-    }
-  };
+    document.documentElement.style.overflow = dentro ? '' : 'hidden';
+  }, [dentro]);
 
   return (
-    <div className={`min-h-screen bg-fondo bg-damasco font-sans text-tinta ${revelado ? 'xv-revelado' : 'xv-oculto'}`}>
-      {!sobreAbierto && <Sobre revelar={revelar} abrir={() => setSobreAbierto(true)} alTocar={musica.reproducir} />}
-      {lluvia && <Lluvia />}
-      <div aria-hidden="true" className="fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-rosa" />
+    <div className={`min-h-screen bg-tinta font-sans text-tinta ${dentro ? 'po-visible' : 'po-oculto'}`}>
+      {!dentro && <Entrada entrar={() => setDentro(true)} alTocar={musica.reproducir} />}
       <div aria-hidden="true" className="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0">
-        <div id="xv-musica" />
+        <div id="musica" />
       </div>
-      <Encabezado musica={musica} />
-      <main className="xv-escena mx-auto flex max-w-md flex-col gap-10 px-6 pb-[calc(110px+env(safe-area-inset-bottom))]">
+      {dentro && <BotonMusica musica={musica} />}
+
+      <main className="po-escena grano mx-auto flex min-h-screen max-w-md flex-col gap-10 bg-rojo pb-[calc(96px+env(safe-area-inset-bottom))]">
         <Portada />
-        <Fecha />
-        <Filigrana />
-        <Programa />
-        <Padres />
-        <Filigrana />
-        <Vestimenta />
-        <Filigrana />
-        <Regalo />
-        <div className="flex flex-col items-center gap-5">
-          <button
-            onClick={() => setRsvp(true)}
-            className="min-h-[54px] w-full rounded-full bg-acento font-cinzel text-[15px] tracking-[0.18em] text-white transition-colors hover:bg-tinta focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
-          >
-            CONFIRMAR ASISTENCIA
-          </button>
-          <Perlas />
-          <p className="font-script text-4xl text-acento">Te espero</p>
-          <Tiara className="h-6 w-10 text-perla" />
-        </div>
+        <CuentaRegresiva />
+        <Gira />
+        <FechaUnica />
+        <Tira />
+        <Boleto confirmar={() => setRsvp(true)} />
+        <p className="px-5 text-center font-poster text-2xl tracking-[0.08em]">¡NOS VEMOS EN PRIMERA FILA!</p>
       </main>
 
-      {sobreAbierto && <Navegacion confirmar={() => setRsvp(true)} />}
+      {dentro && <BarraConfirmar confirmar={() => setRsvp(true)} />}
       <Confirmar abierto={rsvp} cerrar={() => setRsvp(false)} />
     </div>
   );
