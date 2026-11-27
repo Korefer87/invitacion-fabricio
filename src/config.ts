@@ -38,7 +38,7 @@ export const EVENTO = {
 
   // Número de WhatsApp que recibe las confirmaciones, con lada de país y sin espacios.
   // Ejemplo: '5213312345678'. Si se deja vacío, WhatsApp pedirá elegir el contacto.
-  whatsapp: '523330132720',
+  whatsapp: '523338097900',
 
   // Canción de fondo: el código del video de YouTube (lo que va después de "watch?v=").
   // Déjalo vacío para quitar la música.
