@@ -42,7 +42,7 @@ export const EVENTO = {
 
   // Canción de fondo: el código del video de YouTube (lo que va después de "watch?v=").
   // Déjalo vacío para quitar la música.
-  musicaYoutube: '',
+  musicaYoutube: 'Gs069dndIYk', // Earth, Wind & Fire – September
 };
 
 export const mapaUrl = () =>
