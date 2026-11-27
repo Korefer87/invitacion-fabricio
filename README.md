@@ -1,6 +1,6 @@
 # Fabricio 60
 
-Invitación digital para el cumpleaños 60 de Fabricio (sábado 9 de enero de 2027, 3:00 pm, Mansión Mansur). Diseño de póster de gira "1967–2027".
+Invitación digital para el cumpleaños 60 de Fabricio (sábado 9 de enero de 2027, 2:00 pm, Mansión Mansur). Diseño de póster de gira "1967–2027".
 
 ## Correr en local
 

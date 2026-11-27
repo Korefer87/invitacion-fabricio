@@ -7,12 +7,12 @@ export const EVENTO = {
   cumple: '7 de enero de 2027',
 
   // Fecha y hora de inicio (hora del centro de México)
-  fechaISO: '2027-01-09T15:00:00-06:00',
+  fechaISO: '2027-01-09T14:00:00-06:00',
   fechaTexto: 'Sábado 9 de enero de 2027',
   fechaCorta: '09.01.27',
-  hora: '3:00 pm',
+  hora: '2:00 pm',
   // Para "Agregar al calendario" (inicio/fin en hora local)
-  calendario: '20270109T150000/20270109T230000',
+  calendario: '20270109T140000/20270109T220000',
 
   lugar: {
     nombre: 'Mansión Mansur',
@@ -42,7 +42,7 @@ export const EVENTO = {
 
   // Canción de fondo: el código del video de YouTube (lo que va después de "watch?v=").
   // Déjalo vacío para quitar la música.
-  musicaYoutube: 'Gs069dndIYk', // Earth, Wind & Fire – September
+  musicaYoutube: 'Ps2Jc28tQrw', // Robin S – Show Me Love
 };
 
 export const mapaUrl = () =>
