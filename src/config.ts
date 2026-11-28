@@ -31,7 +31,7 @@ export const EVENTO = {
     { epoca: '70s', titulo: 'Gira del moño rojo', foto: 'fotos/nino.jpg' },
     { epoca: '80s', titulo: 'Tour de los rizos', foto: 'fotos/joven.jpg' },
     { epoca: '90s', titulo: 'Traje y corbata', foto: 'fotos/traje.jpg' },
-    { epoca: '2010s', titulo: 'Lentes y barba', foto: 'fotos/lentes.jpg' },
+    { epoca: '2020s', titulo: 'Lentes y barba', foto: 'fotos/lentes.jpg' },
     { epoca: 'Hoy', titulo: '60 y contando', foto: 'fotos/hoy.jpg' },
   ],
   fotoPortada: 'fotos/lentes.jpg',
